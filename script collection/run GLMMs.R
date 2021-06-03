@@ -13,13 +13,10 @@ library(igraph)
 
 # Load the data 
 
-SampleData <- read.csv("raw_data/SampleData.csv",  sep = ";")
-IndividualData <- read.csv("raw_data/IndData.csv",  sep = ";")
-NetData <- read.csv("raw_data/NetData.csv",  sep = ";") 
+SampleData <- read.csv("raw_data/SampleData.csv",  sep = ";") # be mindful of separator type
+IndividualData <- read.csv("raw_data/IndData.csv",  sep = ";") # be mindful of separator type
+NetData <- read.csv("raw_data/NetData.csv",  sep = ";") # be mindful of separator type
 # note for variable names: NO = sample ID,	ID = individual ID,	CD = sample collection day,	D	= degree, S	= strength, EV	= eignevector, A = age,	AG = age category,	SEX	= sex, EL = Elo-rating,	FOA = number of focal scans,	FSA	= number of focal sample, EPG = egg count per gram of feces,	SP =  worm species
-header1 <- as.character(read.csv("raw_data/SampleData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
-header2 <- as.character(read.csv("raw_data/IndData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
-
 
 # Make a list of individuals that do not have fecal sample (useful for later)
 NS <- c('takana','mushi','neji','uso')

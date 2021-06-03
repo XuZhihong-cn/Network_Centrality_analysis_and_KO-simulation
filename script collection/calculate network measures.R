@@ -1,11 +1,9 @@
 # this script aims at calculating network measures for each individual
 
-
 library(igraph)
 
 #read the data
 NetData <- read.csv("raw_data/NetData.csv",sep=";") # be mindful of separator type
-
 
 #turn the dataframe into a matrix object and name the col/row as individual ID
 NetData <- NetData[,-1]

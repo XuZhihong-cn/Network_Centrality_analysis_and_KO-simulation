@@ -1,6 +1,6 @@
 # This script details the plotting used in the paper
 
-## NETWORK PLOT (credits @ Christof Neumann)
+## NETWORK PLOT (partial credits @ Christof Neumann)
 
 library(igraph)
 
@@ -49,9 +49,9 @@ plotfoo <- function(pdata = pdata,
 # Load the data (if necessary again)
 # "Clean" the data, delete first explanatory row and transform variables with their correct identity (e.g. "character" into "numeric")
 
-IndividualData <- read.csv("raw_data/IndData.csv",  sep = ";")
-NetData <- read.csv("raw_data/NetData.csv",  sep = ";") 
-header2 <- as.character(read.csv("raw_data/IndData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
+IndividualData <- read.csv("raw_data/IndData.csv",  sep = ";") # be mindful of separator type
+NetData <- read.csv("raw_data/NetData.csv",  sep = ";") # be mindful of separator type
+
 NS <- c('takana','mushi','neji','uso')
 
 NetData <- NetData[,-1]
@@ -93,7 +93,7 @@ Net10 <- igraph::graph.adjacency(NetData10,mode= "undirected",weighted = TRUE, d
 Net25 <- igraph::graph.adjacency(NetData25,mode= "undirected",weighted = TRUE, diag = FALSE)
 Net50 <- igraph::graph.adjacency(NetData50,mode= "undirected",weighted = TRUE, diag = FALSE)
 
-# Create data frame for the outest ring network
+# Create data frame for the most out ring network
 NetALLR <- data.frame(ids = colnames(NetData), eigencent = eigen_centrality(NetALL)$vector)
 NetALLR$eigenrank <- rank(NetALLR$eigencent * (-1))
 
@@ -145,9 +145,7 @@ require(glmmTMB)
 
 # if needed load the dataset and the network matrix again 
 
-header <- as.character(read.csv("raw_data/SampleData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
-SBD <- read.csv("raw_data/SampleData.csv",  sep = ";")
-colnames(SBD) <- header
+SBD <- read.csv("raw_data/SampleData.csv",  sep = ";") # be mindful of separator type
 
 SBD[, c("D", "S", "EV", "A", "EL")] <- apply(SBD[, c("D", "S", "EV", "A", "EL")], 2, function(x)as.numeric(scale(x)))
 SBD$EPG <- round(SBD$EPG)
@@ -263,8 +261,6 @@ SBD1$SEX[which(SBD1$SEX=="female")]<-0
 SBD1$SEX[which(SBD1$SEX=="male")]<-1
 pdataSEX1[1,1] <- 1
 
-
-
 plotsex <- ggplot()+
   geom_point(aes(as.numeric(SBD1$SEX), SBD1$EPG), pch = 16, color = "black", size =5,alpha=0.6)+
   geom_polygon(aes(x =  c(pdataSEX11$SEX, rev(pdataSEX11$SEX)), y = c(pdataSEX11$lower, rev(pdataSEX11$upper))), fill = hcl.colors(5, "zissou1", alpha = 0.7)[3])+
@@ -279,22 +275,18 @@ plotsex <- ggplot()+
   theme(panel.grid.major.x = element_blank(),axis.line = element_line(color = "black",size=1.5),axis.ticks.length = unit(.5,"cm"),axis.ticks = element_line(color = "black",size = 1.5))+
   theme(panel.grid = element_blank(),axis.title = element_blank(),axis.text.y = element_text(size=25),axis.text.x = element_text(size=25))
 
-
-
 # if you want only the bands instead (rather than the polygon)
 # points(pdata$EV, pdata$lower, type = "l", lty = 2, lwd = 3, col = hcl.colors(2, "zissou1")[2])
 # points(pdata$EV, pdata$upper, type = "l", lty = 2, lwd = 3, col = hcl.colors(2, "zissou1")[2])
 
-
 grid.arrange(plotD, plotS, plotEV, nrow = 1)
-
 
 ## RANDOMISATION AND KO SIMULATION PLOTS
 # This part is based on the result output of "run randomisations.R" or "run KO simulations.R". Their output are in same format so that they can be both applied on this script.
 # Here we provide one example based on "RDres_Example.csv"
 
 # Load the data if necessary
-RDres <- read.csv("raw_data/RDres_Example.csv",  sep = ";")
+RDres <- read.csv("raw_data/RDres_Example.csv",  sep = ";") # be mindful of separator type
 
 # Create data frame for plotting models considering strength factors. Other factors can be plotted separately following the same logic.
 

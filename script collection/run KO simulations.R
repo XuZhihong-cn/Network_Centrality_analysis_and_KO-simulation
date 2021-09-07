@@ -15,11 +15,7 @@ library(doParallel)
 library(doSNOW)
 
 # Load the data
-
-SampleData <- read.csv("raw_data/SampleData.csv",  sep = ";")
-header1 <- as.character(read.csv("raw_data/SampleData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
-SBD <- SampleData
-colnames(SBD) <- header1
+SBD <- read.csv("raw_data/SampleData.csv",  sep = ";") # be mindful of separator type
 
 # "Clean" the data, transform variables with their correct identity (e.g. "character" into "numeric")
 # set data as numeric or factors. 
@@ -29,14 +25,9 @@ SBD$CD<-as.factor(SBD$CD)
 SBD$ID<-as.factor(SBD$ID)
 SBD$SP<-as.factor(SBD$Species)
 
+IBD <- read.csv("raw_data/IndData.csv",  sep = ";") # be mindful of separator type
 
-IndividualData <- read.csv("raw_data/IndData.csv",  sep = ";")
-header2 <- as.character(read.csv("raw_data/IndData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
-IBD <- IndividualData
-colnames(IBD) <- header2
-
-
-NetData <- read.csv("raw_Data/NetData.csv",  sep = ";")
+NetData <- read.csv("raw_Data/NetData.csv",  sep = ";") # be mindful of separator type
 # removed the first row of individual names
 NetData <- NetData[,-1]
 # turn the dataframe into a matrix object and name the col/row as individual ID. 

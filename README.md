@@ -1,4 +1,5 @@
-# cent_par_KO
+# Network_Centrality_analysis_and_KO-simulation
+These scripts were developed by Julie Duboscq and Xu Zhihong
 
 this is the workflow for the study on the relationship between social network centrality and parasitism intensity and the impact of missing age-sex classes in the network on this relationship in Japanese macaques
 

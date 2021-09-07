@@ -6,20 +6,9 @@ library(foreach)
 library(doParallel)
 library(doSNOW)
 
-
 # Load the data
-
-IndividualData <- read.csv("raw_data/IndData.csv",  sep = ";")
-header2 <- as.character(read.csv("raw_data/IndData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
-IBD <- IndividualData
-colnames(IBD) <- header2
-
-# Load the data
-SampleData <- read.csv("raw_data/SampleData.csv",  sep = ";")
-header1 <- as.character(read.csv("raw_data/SampleData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
-SBD <- SampleData
-colnames(SBD) <- header1
-
+IBD <- read.csv("raw_data/IndData.csv",  sep = ";") # be mindful of separator type
+SBD <- read.csv("raw_data/SampleData.csv",  sep = ";")  # be mindful of separator type
 
 # "Clean" the data, transform variables with their correct identity (e.g. "character" into "numeric")
 # set data as numeric or factors. 
@@ -32,32 +21,32 @@ SBDaf<-droplevels(subset(droplevels(subset(SBD, AG=="adult")),SEX=="female"))
 SBDjuv<-droplevels(subset(SBD, AG=="juvenile"))
 
 # create complete network
-NetData <- read.csv("raw_Data/NetData.csv",  sep = ";")
+NetData <- read.csv("raw_Data/NetData.csv",  sep = ";") # be mindful of separator types
 # removed the first row of individual names
 NetData <- NetData[,-1]
-# trun the dataframe into a matrix object and name the col/row as individual ID. 
+# turn the dataframe into a matrix object and name the col/row as individual ID. 
 NetData <- as.matrix(NetData)
 is.matrix(NetData)
 rownames(NetData)<- colnames(NetData)
 netall <- graph.adjacency(NetData, mode = "undirected", weighted = TRUE, diag = FALSE)
 
-# create Adult female network
+# create adult female network
 IBD_AF <- droplevels(subset(droplevels(subset(IBD, AG=="adult")),SEX=="female"))
 #subset the proximity matrix to have an adult female only matrix
 sam <- IBD_AF$ID
 NetDataAF<- NetData[(which(rownames(NetData) %in% sam)),(which(colnames(NetData) %in% sam))]
 netAF <- graph.adjacency(NetDataAF, mode = "undirected", weighted = TRUE, diag = FALSE)
 
-# create Juvenile network
+# create juvenile network
 IBD_juv <-droplevels(subset(IBD, AG=="juvenile"))
 #subset the proximity matrix to have an juveniles only matrix
 sam <- IBD_juv$ID
 NetDataJUV<- NetData[(which(rownames(NetData) %in% sam)),(which(colnames(NetData) %in% sam))]
 netJUV <- graph.adjacency(NetDataJUV, mode = "undirected", weighted = TRUE, diag = FALSE)
 
-
 # make a list of individuals that do not have fecal sample
 NS <- c('takana','mushi','neji','uso')
+
 
 ## randomisation function   ##
 

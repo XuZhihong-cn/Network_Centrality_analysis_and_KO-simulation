@@ -180,7 +180,7 @@ head(SBDaf)
 IBD_AF <- droplevels(subset(droplevels(subset(IBD, AG=="adult")),SEX=="female"))
 
 #subset the proximity matrix to have an adult female only matrix
-sam <- IBD_AF$ID
+sam <- IBD_AF[,1]
 NetDataAF<- NetData[(which(rownames(NetData) %in% sam)),(which(colnames(NetData) %in% sam))]
 
 # create a network object
@@ -248,7 +248,7 @@ head(SBDjuv)
 IBD_juv <-droplevels(subset(IBD, AG=="juvenile"))
 
 #subset the proximity matrix to have an juveniles only matrix
-sam <- IBD_juv$ID
+sam <- IBD_juv[,1]
 NetDataJUV<- NetData[(which(rownames(NetData) %in% sam)),(which(colnames(NetData) %in% sam))]
 
 # create a network object

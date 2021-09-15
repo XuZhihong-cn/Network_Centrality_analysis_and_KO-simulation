@@ -28,8 +28,12 @@ is.matrix(NetData)
 rownames(NetData)<- colnames(NetData)
 IBD <- IndividualData
 SBD <- SampleData
-colnames(SBD) <- header1
-colnames(IBD) <- header2
+
+# use these to reset the colnames if the first letter became garbled
+#header1 <- as.character(read.csv("raw_data/SampleData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
+#header2 <- as.character(read.csv("raw_data/IndData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
+#colnames(SBD) <- header1
+#colnames(IBD) <- header2
 SBD[, c("D", "S", "EV", "A", "EL")] <- apply(SBD[, c("D", "S", "EV", "A", "EL")], 2, function(x)as.numeric(scale(x)))
 SBD$EPG <- round(SBD$EPG)
 SBD$CD<-as.factor(SBD$CD)

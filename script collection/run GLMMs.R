@@ -30,10 +30,10 @@ IBD <- IndividualData
 SBD <- SampleData
 
 # use these to reset the colnames if the first letter became garbled
-#header1 <- as.character(read.csv("raw_data/SampleData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
-#header2 <- as.character(read.csv("raw_data/IndData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
-#colnames(SBD) <- header1
-#colnames(IBD) <- header2
+header1 <- as.character(read.csv("raw_data/SampleData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
+header2 <- as.character(read.csv("raw_data/IndData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
+colnames(SBD) <- header1
+colnames(IBD) <- header2
 SBD[, c("D", "S", "EV", "A", "EL")] <- apply(SBD[, c("D", "S", "EV", "A", "EL")], 2, function(x)as.numeric(scale(x)))
 SBD$EPG <- round(SBD$EPG)
 SBD$CD<-as.factor(SBD$CD)
@@ -56,11 +56,11 @@ descdist(SBD$EPG, discrete = TRUE)
 # run the models with 3 centrality measures separately but the EPG from the 3 parasite species together, variables are scaled as well for easier modelling and comparability (see ms text)
 
 # with degree
-glmmD <- glmmTMB(EPG ~ D+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ D+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), data = SBD, family = 'nbinom2',doFit=TRUE)
+glmmD <- glmmTMB(EPG ~ D+A+SEX+EL+(SP)+(1|CD)+(1|ID)+(1|NO), ziformula = ~ D+A+SEX+EL+(SP)+(1|CD)+(1|ID)+(1|NO), data = SBD, family = 'nbinom2',doFit=TRUE)
 # with strength
-glmmS <- glmmTMB(EPG ~ S+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ S+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), data = SBD, family ='nbinom2',doFit=TRUE)
+glmmS <- glmmTMB(EPG ~ S+A+SEX+EL+(SP)+(1|CD)+(1|ID)+(1|NO), ziformula = ~ S+A+SEX+EL+(SP)+(1|CD)+(1|ID)+(1|NO), data = SBD, family ='nbinom2',doFit=TRUE)
 # with eignevector
-glmmEV <- glmmTMB(EPG ~ EV+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ EV+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), data = SBD ,family = 'nbinom2',doFit=TRUE)
+glmmEV <- glmmTMB(EPG ~ EV+A+SEX+EL+(SP)+(1|CD)+(1|ID)+(1|NO), ziformula = ~ EV+A+SEX+EL+(SP)+(1|CD)+(1|ID)+(1|NO), data = SBD ,family = 'nbinom2',doFit=TRUE)
 
 
 # Check overdispersion
@@ -153,7 +153,7 @@ if (require(reshape2)) {
 }
 
 # Run reduced null models with all variables except centrality measures
-glmmnull <- glmmTMB(EPG ~ A+SEX+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ A+SEX+EL+(1|CD)+(1|ID)+(1|SP), data = SBD ,family = 'nbinom2',doFit=TRUE)
+glmmnull <- glmmTMB(EPG ~ A+SEX+EL+(SP)+(1|CD)+(1|ID)+(1|NO), ziformula = ~ A+SEX+EL+(SP)+(1|CD)+(1|ID)+(1|NO), data = SBD ,family = 'nbinom2',doFit=TRUE)
 
 # Check the full models against the reduced null model with Likelihood ratio tests
 anova(glmmD, glmmnull, test="Chisq")
@@ -213,16 +213,16 @@ SBDaf$Daf <- scale(degAF$D[as.numeric(SBDaf$ID)])
 
 # Run the GLMMs
 # with degree
-glmmAF_D <- glmmTMB(EPG ~ Daf+A+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ Daf+A+EL+(1|CD)+(1|ID)+(1|SP), data = SBDaf, family = 'nbinom2',doFit=TRUE)
+glmmAF_D <- glmmTMB(EPG ~ Daf+A+EL+(SP)+(1|CD)+(1|ID)+(1|NO), ziformula = ~ Daf+A+EL+(SP)+(1|CD)+(1|ID)+(1|NO), data = SBDaf, family = 'nbinom2',doFit=TRUE)
 # with strength
-glmmAF_S <- glmmTMB(EPG ~ Saf+A+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ Saf+A+EL+(1|CD)+(1|ID)+(1|SP), data = SBDaf, family ='nbinom2',doFit=TRUE)
+glmmAF_S <- glmmTMB(EPG ~ Saf+A+EL+(SP)+(1|CD)+(1|ID)+(1|NO), ziformula = ~ Saf+A+EL+(SP)+(1|CD)+(1|ID)+(1|NO), data = SBDaf, family ='nbinom2',doFit=TRUE)
 # with eigenvector
-glmmAF_EV <- glmmTMB(EPG ~ EVaf+A+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ EVaf+A+EL+(1|CD)+(1|ID)+(1|SP), data = SBDaf ,family = 'nbinom2',doFit=TRUE)
+glmmAF_EV <- glmmTMB(EPG ~ EVaf+A+EL+(SP)+(1|CD)+(1|ID)+(1|NO), ziformula = ~ EVaf+A+EL+(SP)+(1|CD)+(1|ID)+(1|NO), data = SBDaf ,family = 'nbinom2',doFit=TRUE)
 
 # Run all the checks and diagnostics as before (not repeated here, copy and paste code from above)
 
 # Run reduced null models with all variables except centrality measures
-glmmAF_null <- glmmTMB(EPG ~ A+sEL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ A+sEL+(1|CD)+(1|ID)+(1|SP), data = SBDaf ,family = 'nbinom2',doFit=TRUE)
+glmmAF_null <- glmmTMB(EPG ~ A+EL+(SP)+(1|CD)+(1|ID)+(1|NO), ziformula = ~ A+EL+(SP)+(1|CD)+(1|ID)+(1|NO), data = SBDaf ,family = 'nbinom2',doFit=TRUE)
 
 # Check the full models against the reduced null model with Likelihood ratio tests
 anova(glmmAF_D, glmmAF_null, test="Chisq")
@@ -284,16 +284,16 @@ SBDjuv$EVjuv <- scale(evcentJUV$EV[as.numeric(SBDjuv$ID)])
 
 # Run the GLMMs
 # with degree
-glmmJUV_D <- glmmTMB(EPG ~ Djuv+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ Djuv+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), data = SBDjuv, family = 'nbinom2',doFit=TRUE)
+glmmJUV_D <- glmmTMB(EPG ~ Djuv+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), ziformula = ~ Djuv+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), data = SBDjuv, family = 'nbinom2',doFit=TRUE)
 # with strength
-glmmJUV_S <- glmmTMB(EPG ~ Sjuv+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ Sjuv+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), data = SBDjuv, family ='nbinom2',doFit=TRUE)
+glmmJUV_S <- glmmTMB(EPG ~ Sjuv+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), ziformula = ~ Sjuv+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), data = SBDjuv, family ='nbinom2',doFit=TRUE)
 # with eigenvector
-glmmJUV_EV <- glmmTMB(EPG ~ EVjuv+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ EVjuv+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), data = SBDjuv ,family = 'nbinom2',doFit=TRUE)
+glmmJUV_EV <- glmmTMB(EPG ~ EVjuv+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), ziformula = ~ EVjuv+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), data = SBDjuv ,family = 'nbinom2',doFit=TRUE)
 
 # Run all the checks and diagnostics as before (not repeated here, copy and paste code from above)
 
 # Run reduced null models with all variables except centrality measures
-glmmJUV_null <- glmmTMB(EPG ~ A+SEX+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ A+SEX+EL+(1|CD)+(1|ID)+(1|SP), data = SBDjuv ,family = 'nbinom2',doFit=TRUE)
+glmmJUV_null <- glmmTMB(EPG ~ A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), ziformula = ~ A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), data = SBDjuv ,family = 'nbinom2',doFit=TRUE)
 
 # Check the full models against the reduced null model with Likelihood ratio tests
 anova(glmmJUV_D, glmmJUV_null, test="Chisq")

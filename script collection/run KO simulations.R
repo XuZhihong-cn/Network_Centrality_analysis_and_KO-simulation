@@ -16,7 +16,8 @@ library(doSNOW)
 
 # Load the data
 SBD <- read.csv("raw_data/SampleData.csv",  sep = ";") # be mindful of separator type
-
+header1 <- as.character(read.csv("raw_data/SampleData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
+colnames(SBD) <- header1
 # "Clean" the data, transform variables with their correct identity (e.g. "character" into "numeric")
 # set data as numeric or factors. 
 SBD[, c("D", "S", "EV", "A", "EL")] <- apply(SBD[, c("D", "S", "EV", "A", "EL")], 2, function(x)as.numeric(scale(x)))
@@ -26,6 +27,8 @@ SBD$ID<-as.factor(SBD$ID)
 SBD$SP<-as.factor(SBD$Species)
 
 IBD <- read.csv("raw_data/IndData.csv",  sep = ";") # be mindful of separator type
+header2 <- as.character(read.csv("raw_data/IndData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
+colnames(IBD) <- header2
 
 NetData <- read.csv("raw_Data/NetData.csv",  sep = ";") # be mindful of separator type
 # removed the first row of individual names
@@ -72,13 +75,13 @@ simulation <- function(i)  {
   temp$S <- scale(S$S[as.numeric(temp$ID)])
   
   # run the models
-  try(tempEV <- glmmTMB(EPG ~ EV+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ EV+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), data = temp,family = 'nbinom2',doFit=TRUE))
-  try(tempS <- glmmTMB(EPG ~ S+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ S+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), data = temp, family ='nbinom2',doFit=TRUE))
-  try(tempD <- glmmTMB(EPG ~ D+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ D+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), data = temp, family = 'nbinom2',doFit=TRUE))
+  try(tempEV <- glmmTMB(EPG ~ EV+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), ziformula = ~ EV+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), data = temp,family = 'nbinom2',doFit=TRUE))
+  try(tempS <- glmmTMB(EPG ~ S+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), ziformula = ~ S+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), data = temp, family ='nbinom2',doFit=TRUE))
+  try(tempD <- glmmTMB(EPG ~ D+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), ziformula = ~ D+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), data = temp, family = 'nbinom2',doFit=TRUE))
   
-  try(temp <- c(confint(tempEV)[2,1],tempEV$fit$par[2],confint(tempEV)[2,2],confint(tempS)[2,1],tempS$fit$par[2],confint(tempS)[2,2],confint(tempD)[2,1],tempD$fit$par[2],confint(tempD)[2,2]))
+  try(temp1 <- c(confint(tempEV)[2,1],tempEV$fit$par[2],confint(tempEV)[2,2],confint(tempS)[2,1],tempS$fit$par[2],confint(tempS)[2,2],confint(tempD)[2,1],tempD$fit$par[2],confint(tempD)[2,2]))
   
-  try(temp)
+  try(temp1)
   
 }
 
@@ -103,7 +106,7 @@ KOres <- foreach(i = 1:perm,.packages = c('glmmTMB','igraph','readxl'), .options
 
 # Save the results after each simulation run so there will be 4 datasets, KOres5p, KOres10p, KOres25p, KOres50p
 KOres <- as.data.frame(do.call(rbind, KOres))
-write.csv(na.omit(KOres5p),file = "KOres.csv")
+#write.csv(na.omit(KOres),file = "KOres.csv")
 
 # End of process
 stopImplicitCluster()

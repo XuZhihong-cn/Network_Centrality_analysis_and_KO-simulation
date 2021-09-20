@@ -5,10 +5,17 @@
 library(foreach)
 library(doParallel)
 library(doSNOW)
-
+library(igraph)
+library(glmmTMB)
 # Load the data
 IBD <- read.csv("raw_data/IndData.csv",  sep = ";") # be mindful of separator type
 SBD <- read.csv("raw_data/SampleData.csv",  sep = ";")  # be mindful of separator type
+
+# use these to reset the colnames if the first letter became garbled
+header1 <- as.character(read.csv("raw_data/SampleData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
+header2 <- as.character(read.csv("raw_data/IndData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
+colnames(SBD) <- header1
+colnames(IBD) <- header2
 
 # "Clean" the data, transform variables with their correct identity (e.g. "character" into "numeric")
 # set data as numeric or factors. 
@@ -52,7 +59,7 @@ NS <- c('takana','mushi','neji','uso')
 
 randomall <- function(i){
 # create a temporary dataframe
-  tempdata <- data.frame(EPG = SBD$EPG, ID = SBD$ID, A = SBD$A, SEX = SBD$SEX, EL = SBD$EL, EV = rep(0, length(SBD$ID)), D = rep(0, length(SBD$ID)), S = rep(0, length(SBD$ID)), CD = SBD$CD, SP = SBD$SP)
+  tempdata <- data.frame(EPG = SBD$EPG, ID = SBD$ID, A = SBD$A, SEX = SBD$SEX, EL = SBD$EL,EV=rep(0,length(SBD$ID)),D=rep(0,length(SBD$ID)),S=rep(0,length(SBD$ID)),CD=SBD$CD,SP=SBD$SP,NO=SBD$NO)
 # create the randomized network  
   tempnet <- rewire(netall, with = each_edge(prob = runif(1,0,1), loops = FALSE, multiple = TRUE))
 # calculate the new network measures
@@ -72,19 +79,21 @@ randomall <- function(i){
   tempdata$S <- scale(S1$S[as.numeric(tempdata$ID)])
   tempdata$D <- scale(D1$D[as.numeric(tempdata$ID)])
 # run the glmms  
-  try(tempD <- glmmTMB(EPG ~ D+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ D+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), data = tempdata, family = 'nbinom2',doFit=TRUE))
-  try(tempS <- glmmTMB(EPG ~ S+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ S+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), data = tempdata, family ='nbinom2',doFit=TRUE))
-  try(tempEV <- glmmTMB(EPG ~ EV+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ EV+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), data = tempdata ,family = 'nbinom2',doFit=TRUE))
+  try(tempD <- glmmTMB(EPG ~ D+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), ziformula = ~ D+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), data = tempdata, family = 'nbinom2',doFit=TRUE))
+  try(tempS <- glmmTMB(EPG ~ S+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), ziformula = ~ S+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), data = tempdata, family ='nbinom2',doFit=TRUE))
+  try(tempEV <- glmmTMB(EPG ~ EV+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), ziformula = ~ EV+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), data = tempdata ,family = 'nbinom2',doFit=TRUE))
   
 # extract confidence intervals and estimates   
   try(temp <- c(confint(tempEV)[2,1],tempEV$fit$par[2],confint(tempEV)[2,2],confint(tempS)[2,1],tempS$fit$par[2],confint(tempS)[2,2],confint(tempD)[2,1],tempD$fit$par[2],confint(tempD)[2,2]))
   try(temp)
 
 } 
-
+######################work until here
+################################################
+#################################################
 randomaf <- function(i){
   
-  tempdataaf <- data.frame(EPG = SBDaf$EPG, ID = SBDaf$ID, A = SBDaf$A, EL = SBDaf$EL, EV = rep(0, length(SBDaf$ID)), D = rep(0, length(SBDaf$ID)), S = rep(0, length(SBDaf$ID)), CD = SBDaf$CD, SP = SBDaf$SP)
+  tempdataaf <- data.frame(EPG = SBDaf$EPG, ID = SBDaf$ID, A = SBDaf$A, EL = SBDaf$EL, EV = rep(0, length(SBDaf$ID)), D = rep(0, length(SBDaf$ID)), S = rep(0, length(SBDaf$ID)), CD = SBDaf$CD, SP = SBDaf$SP, NO = SBDaf$NO)
   
   tempnetaf <- rewire(netAF, with = each_edge(prob = runif(1,0,1), loops = FALSE, multiple = TRUE))
   
@@ -100,9 +109,9 @@ randomaf <- function(i){
   tempdataaf$S <- scale(Saf$S[as.numeric(tempdataaf$ID)])
   tempdataaf$D <- scale(Daf$D[as.numeric(tempdataaf$ID)])
   
-  try(tempafD <- glmmTMB(EPG ~ D+A+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ D+A+EL+(1|CD)+(1|ID)+(1|SP), data = tempdataaf, family = 'nbinom2',doFit=TRUE))
-  try(tempafS <- glmmTMB(EPG ~ S+A+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ S+A+EL+(1|CD)+(1|ID)+(1|SP), data = tempdataaf, family ='nbinom2',doFit=TRUE))
-  try(tempafEV <- glmmTMB(EPG ~ EV+A+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ EV+A+EL+(1|CD)+(1|ID)+(1|SP), data = tempdataaf ,family = 'nbinom2',doFit=TRUE))
+  try(tempafD <- glmmTMB(EPG ~ D+A+EL+SP+(1|CD)+(1|ID)+(1|NO), ziformula = ~ D+A+EL+SP+(1|CD)+(1|ID)+(1|NO), data = tempdataaf, family = 'nbinom2',doFit=TRUE))
+  try(tempafS <- glmmTMB(EPG ~ S+A+EL+SP+(1|CD)+(1|ID)+(1|NO), ziformula = ~ S+A+EL+SP+(1|CD)+(1|ID)+(1|NO), data = tempdataaf, family ='nbinom2',doFit=TRUE))
+  try(tempafEV <- glmmTMB(EPG ~ EV+A+EL+SP+(1|CD)+(1|ID)+(1|NO), ziformula = ~ EV+A+EL+SP+(1|CD)+(1|ID)+(1|NO), data = tempdataaf ,family = 'nbinom2',doFit=TRUE))
   
   try(tempaf <- c(confint(tempafEV)[2,1],tempafEV$fit$par[2],confint(tempafEV)[2,2],confint(tempafS)[2,1],tempafS$fit$par[2],confint(tempafS)[2,2],confint(tempafD)[2,1],tempafD$fit$par[2],confint(tempafD)[2,2]))
   
@@ -111,7 +120,7 @@ randomaf <- function(i){
 
 randomjuv <- function(i){
  
-  tempdatajuv <- data.frame(EPG = SBDjuv$EPG, ID = SBDjuv$ID, A = SBDjuv$A, SEX = SBDjuv$SEX, EL = SBDjuv$EL, EV = rep(0, length(SBDjuv$ID)), D = rep(0, length(SBDjuv$ID)), S = rep(0, length(SBDjuv$ID)), CD = SBDjuv$CD, SP = SBDjuv$SP)
+  tempdatajuv <- data.frame(EPG = SBDjuv$EPG, ID = SBDjuv$ID, A = SBDjuv$A, SEX = SBDjuv$SEX, EL = SBDjuv$EL, EV = rep(0, length(SBDjuv$ID)), D = rep(0, length(SBDjuv$ID)), S = rep(0, length(SBDjuv$ID)), CD = SBDjuv$CD, SP = SBDjuv$SP, NO = SBDjuv$NO)
   
   tempnetjuv <- rewire(netJUV, with = each_edge(prob = runif(1,0,1), loops = FALSE, multiple = TRUE))
   
@@ -131,9 +140,9 @@ randomjuv <- function(i){
   tempdatajuv$S <- scale(Sjuv$S[as.numeric(tempdatajuv$ID)])
   tempdatajuv$EV <- scale(EVjuv$EV[as.numeric(tempdatajuv$ID)])
   
-  try(tempjuvD <- glmmTMB(EPG ~ D+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ D+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), data = tempdatajuv, family = 'nbinom2',doFit=TRUE))
-  try(tempjuvS <- glmmTMB(EPG ~ S+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ S+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), data = tempdatajuv, family ='nbinom2',doFit=TRUE))
-  try(tempjuvEV <- glmmTMB(EPG ~ EV+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ EV+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), data = tempdatajuv ,family = 'nbinom2',doFit=TRUE))
+  try(tempjuvD <- glmmTMB(EPG ~ D+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), ziformula = ~ D+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), data = tempdatajuv, family = 'nbinom2',doFit=TRUE))
+  try(tempjuvS <- glmmTMB(EPG ~ S+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), ziformula = ~ S+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), data = tempdatajuv, family ='nbinom2',doFit=TRUE))
+  try(tempjuvEV <- glmmTMB(EPG ~ EV+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), ziformula = ~ EV+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), data = tempdatajuv ,family = 'nbinom2',doFit=TRUE))
   
   try(tempjuv <- c(confint(tempjuvEV)[2,1],tempjuvEV$fit$par[2],confint(tempjuvEV)[2,2],confint(tempjuvS)[2,1],tempjuvS$fit$par[2],confint(tempjuvS)[2,2],confint(tempjuvD)[2,1],tempjuvD$fit$par[2],confint(tempjuvD)[2,2]))
   

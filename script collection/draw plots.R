@@ -59,6 +59,7 @@ NetData <- as.matrix(NetData)
 is.matrix(NetData)
 rownames(NetData)<- colnames(NetData)
 IBD <- IndividualData
+header2 <- as.character(read.csv("raw_data/IndData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
 colnames(IBD) <- header2
 
 
@@ -95,7 +96,7 @@ Net50 <- igraph::graph.adjacency(NetData50,mode= "undirected",weighted = TRUE, d
 
 # Create data frame for the most out ring network
 NetALLR <- data.frame(ids = colnames(NetData), eigencent = eigen_centrality(NetALL)$vector)
-NetALLR$eigenrank <- rank(NetALLR$eigencent * (-1))
+NetALLR$eigenrank <- rank(NetALLR$eigencent )
 
 # Exclude ranks from individuals that are excluded
 nub5<-NetALLR[which(NetALLR[,1] %in% sam1),3]

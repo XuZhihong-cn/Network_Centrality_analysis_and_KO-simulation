@@ -179,10 +179,20 @@ summary(glmm)
 ## ADULT FEMALES ##
 
 # subset the data set to select adult females only 
+SampleData <- read.csv("raw_data/SampleData.csv",  sep = ";") # be mindful of separator type
+SBD <- SampleData
+
+# use these to reset the colnames if the first letter became garbled
+header1 <- as.character(read.csv("raw_data/SampleData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
+colnames(SBD) <- header1
+
 SBDaf<-droplevels(subset(droplevels(subset(SBD, AG=="adult")),SEX=="female"))
 head(SBDaf)
 IBD_AF <- droplevels(subset(droplevels(subset(IBD, AG=="adult")),SEX=="female"))
-
+SBDaf$EPG <- round(SBDaf$EPG)
+SBDaf$CD<-as.factor(SBDaf$CD)
+SBDaf$ID<-as.factor(SBDaf$ID)
+SBDaf$SP<-as.factor(SBDaf$Species)
 #subset the proximity matrix to have an adult female only matrix
 sam <- IBD_AF[,1]
 NetDataAF<- NetData[(which(rownames(NetData) %in% sam)),(which(colnames(NetData) %in% sam))]
@@ -203,13 +213,17 @@ degAF <- data.frame(ID = as.factor(names(degAF)), D = degAF)
 strengthAF <- data.frame(ID = as.factor(names(strengthAF)), S = strengthAF)
 evcentAF <- data.frame(ID = as.factor(names(evcentAF)), EV = evcentAF)
 
+
+
 # Check if IDs match between network measure dataframe and analysis dataframe 
 if(!identical(levels(evcentAF$ID), levels(droplevels(SBDaf$ID)))) stop("something wrong with factor levels in adult-only")
 
 # If yes, then put the new centrality measures back into the analysis dataframe 
+
 SBDaf$EVaf <- scale(evcentAF$EV[as.numeric(SBDaf$ID)])
 SBDaf$Saf <- scale(strengthAF$S[as.numeric(SBDaf$ID)])
 SBDaf$Daf <- scale(degAF$D[as.numeric(SBDaf$ID)])
+SBDaf[, c( "A", "EL")] <- apply(SBDaf[, c( "A", "EL")], 2, function(x)as.numeric(scale(x)))
 
 # Run the GLMMs
 # with degree
@@ -247,9 +261,21 @@ summary(glmmAF)
 ## JUVENILES ##
 
 # subset the data set to select juveniles only 
+
+SampleData <- read.csv("raw_data/SampleData.csv",  sep = ";") # be mindful of separator type
+SBD <- SampleData
+
+# use these to reset the colnames if the first letter became garbled
+header1 <- as.character(read.csv("raw_data/SampleData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
+colnames(SBD) <- header1
+
 SBDjuv<-droplevels(subset(SBD, AG=="juvenile"))
 head(SBDjuv)
 IBD_juv <-droplevels(subset(IBD, AG=="juvenile"))
+SBDjuv$EPG <- round(SBDjuv$EPG)
+SBDjuv$CD<-as.factor(SBDjuv$CD)
+SBDjuv$ID<-as.factor(SBDjuv$ID)
+SBDjuv$SP<-as.factor(SBDjuv$Species)
 
 #subset the proximity matrix to have an juveniles only matrix
 sam <- IBD_juv[,1]
@@ -281,6 +307,7 @@ if(!identical(levels(evcentJUV$ID), levels(droplevels(SBDjuv$ID)))) stop("someth
 SBDjuv$Djuv <- scale(degJUV$D[as.numeric(SBDjuv$ID)])
 SBDjuv$Sjuv <- scale(strengthJUV$S[as.numeric(SBDjuv$ID)])
 SBDjuv$EVjuv <- scale(evcentJUV$EV[as.numeric(SBDjuv$ID)])
+SBDjuv[, c( "A", "EL")] <- apply(SBDjuv[, c( "A", "EL")], 2, function(x)as.numeric(scale(x)))
 
 # Run the GLMMs
 # with degree

@@ -147,7 +147,8 @@ require(glmmTMB)
 # if needed load the dataset and the network matrix again 
 
 SBD <- read.csv("raw_data/SampleData.csv",  sep = ";") # be mindful of separator type
-
+header1 <- as.character(read.csv("raw_data/SampleData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
+colnames(SBD) <- header1
 SBD[, c("D", "S", "EV", "A", "EL")] <- apply(SBD[, c("D", "S", "EV", "A", "EL")], 2, function(x)as.numeric(scale(x)))
 SBD$EPG <- round(SBD$EPG)
 SBD$CD<-as.factor(SBD$CD)
@@ -155,9 +156,9 @@ SBD$ID<-as.factor(SBD$ID)
 SBD$SP<-as.factor(SBD$Species)
 
 # if needed run the models again
-glmmD <- glmmTMB(EPG ~ D+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ D+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), data = SBD, family = 'nbinom2',doFit=TRUE)
-glmmS <- glmmTMB(EPG ~ S+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ S+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), data = SBD, family ='nbinom2',doFit=TRUE)
-glmmEV <- glmmTMB(EPG ~ EV+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), ziformula = ~ EV+A+SEX+EL+(1|CD)+(1|ID)+(1|SP), data = SBD ,family = 'nbinom2',doFit=TRUE)
+glmmD <- glmmTMB(EPG ~ D+A+SEX+EL+(SP)+(1|CD)+(1|ID)+(1|NO), ziformula = ~ D+A+SEX+EL+(SP)+(1|CD)+(1|ID)+(1|NO), data = SBD, family = 'nbinom2',doFit=TRUE)
+glmmS <- glmmTMB(EPG ~ S+A+SEX+EL+(SP)+(1|CD)+(1|ID)+(1|NO), ziformula = ~ S+A+SEX+EL+(SP)+(1|CD)+(1|ID)+(1|NO), data = SBD, family ='nbinom2',doFit=TRUE)
+glmmEV <- glmmTMB(EPG ~ EV+A+SEX+EL+(SP)+(1|CD)+(1|ID)+(1|NO), ziformula = ~ EV+A+SEX+EL+(SP)+(1|CD)+(1|ID)+(1|NO), data = SBD ,family = 'nbinom2',doFit=TRUE)
 
 
 # Create the dataframe for Effect
@@ -260,21 +261,34 @@ plotEL <- ggplot()+
 SBD1 <- SBD
 SBD1$SEX[which(SBD1$SEX=="female")]<-0
 SBD1$SEX[which(SBD1$SEX=="male")]<-1
-pdataSEX1[1,1] <- 1
 
 plotsex <- ggplot()+
   geom_point(aes(as.numeric(SBD1$SEX), SBD1$EPG), pch = 16, color = "black", size =5,alpha=0.6)+
-  geom_polygon(aes(x =  c(pdataSEX11$SEX, rev(pdataSEX11$SEX)), y = c(pdataSEX11$lower, rev(pdataSEX11$upper))), fill = hcl.colors(5, "zissou1", alpha = 0.7)[3])+
-  geom_polygon(aes(x =  c(pdataSEX21$SEX, rev(pdataSEX21$SEX)), y = c(pdataSEX21$lower, rev(pdataSEX21$upper))), fill = hcl.colors(5, "zissou1", alpha = 0.5)[3])+
-  geom_polygon(aes(x =  c(pdataSEX31$SEX, rev(pdataSEX31$SEX)), y = c(pdataSEX31$lower, rev(pdataSEX31$upper))), fill = hcl.colors(5, "zissou1", alpha = 0.3)[3])+
-  geom_line(aes(pdataSEX11$SEX, pdataSEX11$fit), lwd = 2,col = hcl.colors(5, "zissou1", alpha = 1)[1])+
-  geom_line(aes(pdataSEX21$SEX, pdataSEX21$fit), lwd = 1.5,col = hcl.colors(5, "zissou1", alpha = 1)[2])+
-  geom_line(aes(pdataSEX31$SEX, pdataSEX31$fit), lwd = 1,col = hcl.colors(5, "zissou1", alpha = 1)[4])+
-  theme_bw()+
+  geom_polygon(aes(x =  c(-0.1,-0.1,0.1,0.1), y = c(pdataSEX11$lower[1],pdataSEX11$lower[2],pdataSEX11$lower[2],pdataSEX11$lower[1])), fill = hcl.colors(5, "zissou1", alpha = 0.7)[3])+
+  geom_polygon(aes(x =  c(0.9,0.9,1.1,1.1), y = c(pdataSEX11$upper[1],pdataSEX11$upper[2],pdataSEX11$upper[2],pdataSEX11$upper[1])), fill = hcl.colors(5, "zissou1", alpha = 0.7)[3])+
+  geom_polygon(aes(x =  c(-0.2,-0.2,0.2,0.2), y = c(pdataSEX21$lower[1],pdataSEX21$lower[2],pdataSEX21$lower[2],pdataSEX21$lower[1])), fill = hcl.colors(5, "zissou1", alpha = 0.5)[3])+
+  geom_polygon(aes(x =  c(0.8,0.8,1.2,1.2), y = c(pdataSEX21$upper[1],pdataSEX21$upper[2],pdataSEX21$upper[2],pdataSEX21$upper[1])), fill = hcl.colors(5, "zissou1", alpha = 0.5)[3])+
+  geom_polygon(aes(x =  c(-0.3,-0.3,0.3,0.3), y = c(pdataSEX31$lower[1],pdataSEX31$lower[2],pdataSEX31$lower[2],pdataSEX31$lower[1])), fill = hcl.colors(5, "zissou1", alpha = 0.3)[3])+
+  geom_polygon(aes(x =  c(0.7,0.7,1.3,1.3), y = c(pdataSEX31$upper[1],pdataSEX31$upper[2],pdataSEX31$upper[2],pdataSEX31$upper[1])), fill = hcl.colors(5, "zissou1", alpha = 0.3)[3])+
+  geom_point(aes(0, pdataSEX11$fit[1]),pch = 16,size = 5,col = hcl.colors(5, "zissou1", alpha = .7)[1])+
+  geom_point(aes(1, pdataSEX11$fit[2]),pch = 16,size = 5,col = hcl.colors(5, "zissou1", alpha = .7)[1])+
+  geom_point(aes(0, pdataSEX21$fit[1]),pch = 16,size = 5,col = hcl.colors(5, "zissou1", alpha = .7)[2])+
+  geom_point(aes(1, pdataSEX21$fit[2]),pch = 16,size = 5,col = hcl.colors(5, "zissou1", alpha = .7)[2])+
+  geom_point(aes(0, pdataSEX31$fit[1]),pch = 16,size = 5,col = hcl.colors(5, "zissou1", alpha = .7)[4])+
+  geom_point(aes(1, pdataSEX31$fit[2]),pch = 16,size = 5,col = hcl.colors(5, "zissou1", alpha = .7)[4])+
+    theme_bw()+
   ylim(c(0,25000))+
   scale_x_continuous(breaks=c(0,1),limits=c(-0.3,1.3))+
   theme(panel.grid.major.x = element_blank(),axis.line = element_line(color = "black",size=1.5),axis.ticks.length = unit(.5,"cm"),axis.ticks = element_line(color = "black",size = 1.5))+
   theme(panel.grid = element_blank(),axis.title = element_blank(),axis.text.y = element_text(size=25),axis.text.x = element_text(size=25))
+
+
+ggsave('Degree.png', plot = plotD, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 1/Regression plot", dpi = 300,width = 5.29, height = 4.30,units= "in")
+ggsave('Strength.png', plot = plotS, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 1/Regression plot", dpi = 300,width = 5.29, height = 4.30,units= "in")
+ggsave('Eigenvector.png', plot = plotEV, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 1/Regression plot", dpi = 300,width = 5.29, height = 4.30,units= "in")
+ggsave('Elo-rating.png', plot = plotEL, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 1/Regression plot", dpi = 300,width = 5.29, height = 4.30,units= "in")
+ggsave('Age.png', plot = plotA, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 1/Regression plot", dpi = 300,width = 5.29, height = 4.30,units= "in")
+ggsave('Sex.png', plot = plotsex, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 1/Regression plot", dpi = 300,width = 5.29, height = 4.30,units= "in")
 
 # if you want only the bands instead (rather than the polygon)
 # points(pdata$EV, pdata$lower, type = "l", lty = 2, lwd = 3, col = hcl.colors(2, "zissou1")[2])
@@ -285,14 +299,18 @@ grid.arrange(plotD, plotS, plotEV, nrow = 1)
 ## RANDOMISATION AND KO SIMULATION PLOTS
 # This part is based on the result output of "run randomisations.R" or "run KO simulations.R". Their output are in same format so that they can be both applied on this script.
 # Here we provide one example based on "RDres_Example.csv"
-
+require(dplyr)
 # Load the data if necessary
 RDres <- read.csv("raw_data/RDres_Example.csv",  sep = ";") # be mindful of separator type
-
+header3 <- as.character(read.csv("raw_data/RDres_Example.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
+colnames(RDres) <- header3
+arrange(RDres,EV)
 # Create data frame for plotting models considering strength factors. Other factors can be plotted separately following the same logic.
 
 # CP for Coefficient Plot
-CPdata_RD_S <- data.frame(NO=RDres$NO, Min = RDres$MinS,Estimate = RDres$S,Max = RDres$MaxS,V = "S")
+CPdata_RD_S <- data.frame(Min = RDres$MinS,Estimate = RDres$S,Max = RDres$MaxS,V = "S")
+CPdata_RD_S <- arrange(CPdata_RD_S,Min)
+CPdata_RD_S$NO <- c(1:15)
 CPdata_RD_S$P <- "0.025"
 CPdata_RD_S$E <- CPdata_RD_S$Min
 CPdata_RD_S[16:30,] <- CPdata_RD_S[1:15,]

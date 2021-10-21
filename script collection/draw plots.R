@@ -290,11 +290,7 @@ ggsave('Elo-rating.png', plot = plotEL, device = 'png',path = "C:/Users/Xu Zhiho
 ggsave('Age.png', plot = plotA, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 1/Regression plot", dpi = 300,width = 5.29, height = 4.30,units= "in")
 ggsave('Sex.png', plot = plotsex, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 1/Regression plot", dpi = 300,width = 5.29, height = 4.30,units= "in")
 
-# if you want only the bands instead (rather than the polygon)
-# points(pdata$EV, pdata$lower, type = "l", lty = 2, lwd = 3, col = hcl.colors(2, "zissou1")[2])
-# points(pdata$EV, pdata$upper, type = "l", lty = 2, lwd = 3, col = hcl.colors(2, "zissou1")[2])
 
-grid.arrange(plotD, plotS, plotEV, nrow = 1)
 
 ## RANDOMISATION AND KO SIMULATION PLOTS
 # This part is based on the result output of "run randomisations.R" or "run KO simulations.R". Their output are in same format so that they can be both applied on this script.

@@ -75,9 +75,9 @@ simulation <- function(i)  {
   temp$S <- scale(S$S[as.numeric(temp$ID)])
   
   # run the models
-  try(tempEV <- glmmTMB(EPG ~ EV+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), ziformula = ~ EV+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), data = temp,family = 'nbinom2',doFit=TRUE))
-  try(tempS <- glmmTMB(EPG ~ S+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), ziformula = ~ S+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), data = temp, family ='nbinom2',doFit=TRUE))
-  try(tempD <- glmmTMB(EPG ~ D+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), ziformula = ~ D+A+SEX+EL+SP+(1|CD)+(1|ID)+(1|NO), data = temp, family = 'nbinom2',doFit=TRUE))
+  try(tempEV <- glmmTMB(EPG ~ EV+A+SEX+EL+SP+(1|CD)+(1|ID), ziformula = ~ EV+A+SEX+EL+SP+(1|CD)+(1|ID), data = temp,family = 'nbinom2',doFit=TRUE))
+  try(tempS <- glmmTMB(EPG ~ S+A+SEX+EL+SP+(1|CD)+(1|ID), ziformula = ~ S+A+SEX+EL+SP+(1|CD)+(1|ID), data = temp, family ='nbinom2',doFit=TRUE))
+  try(tempD <- glmmTMB(EPG ~ D+A+SEX+EL+SP+(1|CD)+(1|ID), ziformula = ~ D+A+SEX+EL+SP+(1|CD)+(1|ID), data = temp, family = 'nbinom2',doFit=TRUE))
   
   try(temp1 <- c(confint(tempEV)[2,1],tempEV$fit$par[2],confint(tempEV)[2,2],confint(tempS)[2,1],tempS$fit$par[2],confint(tempS)[2,2],confint(tempD)[2,1],tempD$fit$par[2],confint(tempD)[2,2]))
   

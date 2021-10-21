@@ -153,7 +153,8 @@ if (require(reshape2)) {
 }
 
 # Run reduced null models with all variables except centrality measures
-glmmnull <- glmmTMB(EPG ~ A+SEX+EL+(SP)+(1|CD)+(1|ID)+(1|NO), ziformula = ~ A+SEX+EL+(SP)+(1|CD)+(1|ID)+(1|NO), data = SBD ,family = 'nbinom2',doFit=TRUE)
+# the model cannot converge with default optimizer, so we changed it to "optim" for this model.
+glmmnull <- glmmTMB(EPG ~ A+SEX+EL+(SP)+(1|CD)+(1|ID)+(1|NO), ziformula = ~ A+SEX+EL+(SP)+(1|CD)+(1|ID)+(1|NO), data = SBD ,family = 'nbinom2',doFit=TRUE, control=glmmTMBControl(optimizer=optim, optArgs=list(method="BFGS")) )
 
 # Check the full models against the reduced null model with Likelihood ratio tests
 anova(glmmD, glmmnull, test="Chisq")

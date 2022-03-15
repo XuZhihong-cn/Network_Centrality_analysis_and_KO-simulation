@@ -1,53 +1,10 @@
 # This script details the plotting used in the paper
 
-## NETWORK PLOT (partial credits @ Christof Neumann)
+
+###################  Eigenvector change across partial network
 
 library(igraph)
 
-# Function for ploting multiple networks together for comparison (credits @ Christof Neumann)
-plotfoo <- function(pdata = pdata,
-                    graphobject = net,
-                    plist = plist,
-                    maxradius = 10,
-                    innerrad = 5,
-                    lim = 12,
-                    nind = nrow(pdata),
-                    cexfac = 3,
-                    cols = hcl.colors(length(plist) + 1, "zissou1")) {
-# Assign the location of each node in order to get a network in perfect circle
-    pdata$xloc <- maxradius * cos(seq(2/nind * pi, 2*pi, length.out = nind))
-  pdata$yloc <- maxradius * sin(seq(2/nind * pi, 2*pi, length.out = nind))
-# Set the size of nodes
-      pdata$cexval <- sqrt(pdata$eigenrank / pi * cexfac)
-# Plot the most out ring of nodes 
-   plot(0, 0, type="n", 
-         xlim = c(-lim, lim), ylim = c(-5*lim/3, 5*lim/3),
-         asp = 1, ann = FALSE, axes = FALSE)
-# Draw edges
-  edata <- as_long_data_frame(graphobject)
-  apply(edata[, 1:2], 1, function(x)segments(x0 = pdata$xloc[x[1]], y0 = pdata$yloc[x[1]], x1 = pdata$xloc[x[2]], y1 = pdata$yloc[x[2]], lwd = 0.5))
-  
-  points(pdata$xloc, pdata$yloc, cex = pdata$cexval, bg = cols[1], pch = 21)
-# Do the same thing for nodes from inner ring networks  
-  i=1
-  for (i in seq_len(length(plist))) {
-    r <- seq(maxradius, innerrad, length.out = length(plist) + 1)[-1][i]
-    pd <- pdata
-    rvals <- seq(2/nind * pi, 2*pi, length.out = nind)
-    pd$xloc <- r * cos(rvals)
-    pd$yloc <- r * sin(rvals)
-    
-    idsubset <- plist[[i]]$ids
-    pd <- pd[pd$ids %in% idsubset, ]
-    pd[plist[[i]]$ids, "eigenrank"] <- plist[[i]]$eigenrank
-    pd$cexval <- sqrt(pd$eigenrank / pi * cexfac)
-    
-    points(pd$xloc, pd$yloc, pch = 21, bg = cols[i + 1], cex = pd$cexval)
-  }
-}
-
-# Load the data (if necessary again)
-# "Clean" the data, delete first explanatory row and transform variables with their correct identity (e.g. "character" into "numeric")
 
 IndividualData <- read.csv("raw_data/IndData.csv",  sep = ";") # be mindful of separator type
 NetData <- read.csv("raw_data/NetData.csv",  sep = ";") # be mindful of separator type
@@ -59,7 +16,7 @@ NetData <- as.matrix(NetData)
 is.matrix(NetData)
 rownames(NetData)<- colnames(NetData)
 IBD <- IndividualData
-header2 <- as.character(read.csv("raw_data/IndData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
+header2 <- as.character(unlist(read.csv("raw_data/IndData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ]))
 colnames(IBD) <- header2
 
 
@@ -95,51 +52,129 @@ Net25 <- igraph::graph.adjacency(NetData25,mode= "undirected",weighted = TRUE, d
 Net50 <- igraph::graph.adjacency(NetData50,mode= "undirected",weighted = TRUE, diag = FALSE)
 
 # Create data frame for the most out ring network
-NetALLR <- data.frame(ids = colnames(NetData), eigencent = eigen_centrality(NetALL)$vector)
-NetALLR$eigenrank <- rank(NetALLR$eigencent )
+NetALLR <- data.frame(ids = colnames(NetData), EV = scale(eigen_centrality(NetALL)$vector), EV5=NA,EV10=NA,EV25=NA,EV50=NA,EVaf=NA,EVjuv=NA)
 
-# Exclude ranks from individuals that are excluded
-nub5<-NetALLR[which(NetALLR[,1] %in% sam1),3]
-nub10<-NetALLR[which(NetALLR[,1] %in% sam2),3]
-nub25<-NetALLR[which(NetALLR[,1] %in% sam3),3]
-nub50<-NetALLR[which(NetALLR[,1] %in% sam4),3]
-nubjuv<-NetALLR[which(NetALLR[,1] %in% colnames(NetDataJUV)),3]
-nubaf<-NetALLR[which(NetALLR[,1] %in% colnames(NetDataAF)),3]
+sam1x<-NetALLR$ids[-which(NetALLR$ids %in% sam1)]
+sam2x<-NetALLR$ids[-which(NetALLR$ids %in% sam2)]
+sam3x<-NetALLR$ids[-which(NetALLR$ids %in% sam3)]
+sam4x<-NetALLR$ids[-which(NetALLR$ids %in% sam4)]
 
-rk5 <-c(1:52)[-nub5] 
-rk10 <-c(1:52)[-nub10] 
-rk25 <-c(1:52)[-nub25] 
-rk50 <-c(1:52)[-nub50] 
-rkjuv <-c(1:52)[-nubjuv] 
-rkaf <-c(1:52)[-nubaf] 
+NetALLR$EV5[which(NetALLR$ids %in% sam1x)]<-scale(eigen_centrality(Net5)$vector)
+NetALLR$EV10[which(NetALLR$ids %in% sam2x)]<-scale(eigen_centrality(Net10)$vector)
+NetALLR$EV25[which(NetALLR$ids %in% sam3x)]<-scale(eigen_centrality(Net25)$vector)
+NetALLR$EV50[which(NetALLR$ids %in% sam4x)]<-scale(eigen_centrality(Net50)$vector)
+NetALLR$EVaf[which(NetALLR$ids %in% colnames(NetDataAF))]<-scale(eigen_centrality(NetAF)$vector)
+NetALLR$EVjuv[which(NetALLR$ids %in% colnames(NetDataJUV))]<-scale(eigen_centrality(NetJUV)$vector)
 
-# Create data frame for inner ring networks
-NetAFR <- data.frame(ids = colnames(NetDataAF),eigenrank = rank(eigen_centrality(NetAF)$vector))
-NetJUVR <- data.frame(ids = colnames(NetDataJUV),eigenrank = rank(eigen_centrality(NetJUV)$vector))
-Net5R <- data.frame(ids = colnames(NetData5),eigenrank = rank(eigen_centrality(Net5)$vector))
-Net10R <- data.frame(ids = colnames(NetData10),eigenrank = rank(eigen_centrality(Net10)$vector))
-Net25R <- data.frame(ids = colnames(NetData25),eigenrank = rank(eigen_centrality(Net25)$vector))
-Net50R <- data.frame(ids = colnames(NetData50),eigenrank = rank(eigen_centrality(Net50)$vector))
 
-# Re-rank the inner ring networks with excluded rank list, so that it's comparable to the original network.
-NetAFR$eigenrank<-rkaf[NetAFR$eigenrank]
-NetJUVR$eigenrank<-rkjuv[NetJUVR$eigenrank]
-Net5R$eigenrank<-rk5[Net5R$eigenrank]
-Net10R$eigenrank<-rk10[Net10R$eigenrank]
-Net25R$eigenrank<-rk25[Net25R$eigenrank]
-Net50R$eigenrank<-rk50[Net50R$eigenrank]
+require(ggplot2)
+Example <- NetALLR[c(3,9,11,15,32,33,47,49),]
+Example <-as.data.frame(t(Example)[-1,])
+Example$Net <- NA
+Example$Net <-  factor(c("100%","95%","90%","75%","50%","AF","JUV"))
+levels(Example$Net) <- c("100%","95%","90%","75%","50%","AF","JUV")
+Example[,1][which(Example[,1] %in% NA)] <- -1.2
+Example[,2][which(Example[,2] %in% NA)] <- -1.2
+Example[,3][which(Example[,3] %in% NA)] <- -1.2
+Example[,4][which(Example[,4] %in% NA)] <- -1.2
+Example[,5][which(Example[,5] %in% NA)] <- -1.2
+Example[,6][which(Example[,6] %in% NA)] <- -1.2
+Example[,7][which(Example[,7] %in% NA)] <- -1.2
+Example[,8][which(Example[,8] %in% NA)] <- -1.2
 
-# Create the inner ring netlist
-NetList <- list(Net5R,Net10R,Net25R,Net50R,NetJUVR,NetAFR)
 
-# Plot the multiple network.    
-# "pdata" for the original network data, "graphobject" for the original network object (which edges come from), "plist" for the network list, "maxradius" for the outest ring radius, "innerrad" for the innest ring radius, "cexfac" for the node size, "lim" for the ploting area size.
-plot<- plotfoo(pdata = NetALLR, graphobject = NetALL, plist = NetList, maxradius = 50, innerrad = 22, cexfac = 2, lim=30)
+plot1 <-ggplot(Example)+
+  geom_point(aes(x=Net,y=as.numeric(kei),shape=ifelse(as.numeric(kei) %in% -1.2,"1","2")),size=6)+
+  scale_shape_manual(values = c(13,16))+
+  theme_void()+
+  theme(panel.grid.major.x = element_blank(),axis.line = element_line(color = "black",size=1.5),axis.ticks.length = unit(.5,"cm"),axis.ticks = element_line(color = "black",size = 1.5))+
+  theme(legend.position ="none" ,panel.grid = element_blank(),axis.title = element_blank(),axis.text.y = element_text(size=25),axis.text.x = element_text(size=15))+
+  scale_y_continuous(breaks=c(-1,-0,0,1,2),limits = c(-1.2,2.4))
 
+
+
+plot2 <-ggplot(Example)+
+  geom_point(aes(x=Net,y=as.numeric(minku),shape=ifelse(as.numeric(minku) %in% -1.2,"1","2")),size=6)+
+  scale_shape_manual(values = c(13,16))+
+  theme_void()+
+  theme(panel.grid.major.x = element_blank(),axis.line = element_line(color = "black",size=1.5),axis.ticks.length = unit(.5,"cm"),axis.ticks = element_line(color = "black",size = 1.5))+
+  theme(legend.position ="none" ,panel.grid = element_blank(),axis.title = element_blank(),axis.text.y = element_text(size=25),axis.text.x = element_text(size=15))+
+  scale_y_continuous(breaks=c(-1,-0,0,1,2),limits = c(-1.2,2.4))
+
+
+plot3 <-ggplot(Example)+
+  geom_point(aes(x=Net,y=as.numeric(muku),shape=ifelse(as.numeric(muku) %in% -1.2,"1","2")),size=6)+
+  scale_shape_manual(values = c(13,16))+
+  theme_void()+
+  theme(panel.grid.major.x = element_blank(),axis.line = element_line(color = "black",size=1.5),axis.ticks.length = unit(.5,"cm"),axis.ticks = element_line(color = "black",size = 1.5))+
+  theme(legend.position ="none" ,panel.grid = element_blank(),axis.title = element_blank(),axis.text.y = element_text(size=25),axis.text.x = element_text(size=15))+
+  scale_y_continuous(breaks=c(-1,-0,0,1,2),limits = c(-1.2,2.4))
+
+
+plot4 <-ggplot(Example)+
+  geom_point(aes(x=Net,y=as.numeric(okura),shape=ifelse(as.numeric(okura) %in% -1.2,"1","2")),size=6)+
+  scale_shape_manual(values = c(13,16))+
+  theme_void()+
+  theme(panel.grid.major.x = element_blank(),axis.line = element_line(color = "black",size=1.5),axis.ticks.length = unit(.5,"cm"),axis.ticks = element_line(color = "black",size = 1.5))+
+  theme(legend.position ="none" ,panel.grid = element_blank(),axis.title = element_blank(),axis.text.y = element_text(size=25),axis.text.x = element_text(size=15))+
+  scale_y_continuous(breaks=c(-1,-0,0,1,2),limits = c(-1.2,2.4))
+
+
+
+plot5 <-ggplot(Example)+
+  geom_point(aes(x=Net,y=as.numeric(botan),shape=ifelse(as.numeric(botan) %in% -1.2,"1","2")),size=6)+
+  scale_shape_manual(values = c(13,16))+
+  theme_void()+
+  theme(panel.grid.major.x = element_blank(),axis.line = element_line(color = "black",size=1.5),axis.ticks.length = unit(.5,"cm"),axis.ticks = element_line(color = "black",size = 1.5))+
+  theme(legend.position ="none" ,panel.grid = element_blank(),axis.title = element_blank(),axis.text.y = element_text(size=25),axis.text.x = element_text(size=15))+
+  scale_y_continuous(breaks=c(-1,-0,0,1,2),limits = c(-1.2,2.4))
+
+
+
+plot6 <-ggplot(Example)+
+  geom_point(aes(x=Net,y=as.numeric(hado),shape=ifelse(as.numeric(hado) %in% -1.2,"1","2")),size=6)+
+  scale_shape_manual(values = c(13,16))+
+  theme_void()+
+  theme(panel.grid.major.x = element_blank(),axis.line = element_line(color = "black",size=1.5),axis.ticks.length = unit(.5,"cm"),axis.ticks = element_line(color = "black",size = 1.5))+
+  theme(legend.position ="none" ,panel.grid = element_blank(),axis.title = element_blank(),axis.text.y = element_text(size=25),axis.text.x = element_text(size=15))+
+  scale_y_continuous(breaks=c(-1,-0,0,1,2),limits = c(-1.2,2.4))
+
+
+
+plot7 <-ggplot(Example)+
+  geom_point(aes(x=Net,y=as.numeric(takana),shape=ifelse(as.numeric(takana) %in% -1.2,"1","2")),size=6)+
+  scale_shape_manual(values = c(13,16))+
+  theme_void()+
+  theme(panel.grid.major.x = element_blank(),axis.line = element_line(color = "black",size=1.5),axis.ticks.length = unit(.5,"cm"),axis.ticks = element_line(color = "black",size = 1.5))+
+  theme(legend.position ="none" ,panel.grid = element_blank(),axis.title = element_blank(),axis.text.y = element_text(size=25),axis.text.x = element_text(size=15))+
+  scale_y_continuous(breaks=c(-1,-0,0,1,2),limits = c(-1.2,2.4))
+
+
+
+plot8 <-ggplot(Example)+
+  geom_point(aes(x=Net,y=as.numeric(yomogi),shape=ifelse(as.numeric(yomogi) %in% -1.2,"1","2")),size=6)+
+  scale_shape_manual(values = c(13,16))+
+  theme_void()+
+  theme(panel.grid.major.x = element_blank(),axis.line = element_line(color = "black",size=1.5),axis.ticks.length = unit(.5,"cm"),axis.ticks = element_line(color = "black",size = 1.5))+
+  theme(legend.position ="none" ,panel.grid = element_blank(),axis.title = element_blank(),axis.text.y = element_text(size=25),axis.text.x = element_text(size=15))+
+  scale_y_continuous(breaks=c(-1,-0,0,1,2),limits = c(-1.2,2.4))
+
+
+
+ggsave('Net1.png', plot = plot1, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 2/network plot", dpi = 300,width = 4.32, height = 4.30,units= "in")
+ggsave('Net2.png', plot = plot2, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 2/network plot", dpi = 300,width = 4.32, height = 4.30,units= "in")
+ggsave('Net3.png', plot = plot3, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 2/network plot", dpi = 300,width = 4.32, height = 4.30,units= "in")
+ggsave('Net4.png', plot = plot4, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 2/network plot", dpi = 300,width = 4.32, height = 4.30,units= "in")
+ggsave('Net5.png', plot = plot5, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 2/network plot", dpi = 300,width = 4.32, height = 4.30,units= "in")
+ggsave('Net6.png', plot = plot6, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 2/network plot", dpi = 300,width = 4.32, height = 4.30,units= "in")
+ggsave('Net7.png', plot = plot7, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 2/network plot", dpi = 300,width = 4.32, height = 4.30,units= "in")
+ggsave('Net8.png', plot = plot8, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 2/network plot", dpi = 300,width = 4.32, height = 4.30,units= "in")
+
+
+##
 ## GLMM RESULTS PLOTS (credits @ Christof Neumann)
 # scripts needed: "run GLMMs"
 # each variable gets its own plot
-
 library(effects)
 require(MuMIn)
 require(glmmTMB)
@@ -147,7 +182,7 @@ require(glmmTMB)
 # if needed load the dataset and the network matrix again 
 
 SBD <- read.csv("raw_data/SampleData.csv",  sep = ";") # be mindful of separator type
-header1 <- as.character(read.csv("raw_data/SampleData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
+header1 <- as.character(unlist(read.csv("raw_data/SampleData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ]))
 colnames(SBD) <- header1
 SBD[, c("D", "S", "EV", "A", "EL")] <- apply(SBD[, c("D", "S", "EV", "A", "EL")], 2, function(x)as.numeric(scale(x)))
 SBD$EPG <- round(SBD$EPG)
@@ -190,23 +225,24 @@ pdataSEX31[2,1] <- 1
 require(ggplot2)
 require(gridExtra)
 
+
 plotD <- ggplot()+
-  geom_point(aes(SBD$D, SBD$EPG), pch =16, color = "black", size =5,alpha=0.6)+
-  geom_polygon(aes(x = c(pdataD$D, rev(pdataD$D)), y = c(pdataD$lower, rev(pdataD$upper))), fill =  hcl.colors(5, "zissou1", alpha = 0.4)[3])+
-  geom_line(aes(pdataD$D, pdataD$fit), lwd = 1.5, color = hcl.colors(5, "zissou1", alpha = 1)[4])+
+  geom_point(aes(SBD$D, SBD$EPG), pch =16, color = "#6F6F6F", size =3,alpha=0.6)+
+  geom_polygon(aes(x = c(pdataD$D, rev(pdataD$D)), y = c(pdataD$lower, rev(pdataD$upper))), fill =  "#91CBDC", alpha = 0.7)+
+  geom_line(aes(pdataD$D, pdataD$fit), lwd = 1.5, color ="#C0FAFF")+
   theme_bw()+
-  ylim(c(0,25000))+
+  ylim(c(0,24000))+
   xlim(c(-3,2))+
   theme(panel.grid.major.x = element_blank(),axis.line = element_line(color = "black",size=1.5),axis.ticks.length = unit(.5,"cm"),axis.ticks = element_line(color = "black",size = 1.5))+
   theme(panel.grid = element_blank(),axis.title = element_blank(),axis.text.y = element_text(size=25),axis.text.x = element_text(size=25))
-     
+
 
 plotS <- ggplot()+
-  geom_point(aes(SBD$S, SBD$EPG), pch =16, color = "black", size =5,alpha=0.6)+
-  geom_polygon(aes(x = c(pdataS$S, rev(pdataS$S)), y = c(pdataS$lower, rev(pdataS$upper))), fill =  hcl.colors(5, "zissou1", alpha = 0.4)[3])+
-  geom_line(aes(pdataS$S, pdataS$fit), lwd = 1.5, color = hcl.colors(5, "zissou1", alpha = 1)[4])+
+  geom_point(aes(SBD$S, SBD$EPG), pch =16, color = "#6F6F6F", size =3,alpha=0.6)+
+  geom_polygon(aes(x = c(pdataS$S, rev(pdataS$S)), y = c(pdataS$lower, rev(pdataS$upper))), fill ='#B87A9B',alpha=0.7)+
+  geom_line(aes(pdataS$S, pdataS$fit), lwd = 1.5, color = "#F1AFD1")+
   theme_bw()+
-  ylim(c(0,25000))+
+  ylim(c(0,24000))+
   xlim(c(-3,3))+
   theme(panel.grid.major.x = element_blank(),axis.line = element_line(color = "black",size=1.5),axis.ticks.length = unit(.5,"cm"),axis.ticks = element_line(color = "black",size = 1.5))+
   theme(panel.grid = element_blank(),axis.title = element_blank(),axis.text.y = element_text(size=25),axis.text.x = element_text(size=25))
@@ -214,11 +250,11 @@ plotS <- ggplot()+
 
 
 plotEV <- ggplot()+
-  geom_point(aes(SBD$EV, SBD$EPG), pch =16, color = "black", size =5,alpha=0.6)+
-  geom_polygon(aes(x = c(pdataEV$EV, rev(pdataEV$EV)), y = c(pdataEV$lower, rev(pdataEV$upper))), fill =  hcl.colors(5, "zissou1", alpha = 0.4)[3])+
-  geom_line(aes(pdataEV$EV, pdataEV$fit), lwd = 1.5, color = hcl.colors(5, "zissou1", alpha = 1)[4])+
+  geom_point(aes(SBD$EV, SBD$EPG), pch =16, color = "#6F6F6F", size =3,alpha=0.6)+
+  geom_polygon(aes(x = c(pdataEV$EV, rev(pdataEV$EV)), y = c(pdataEV$lower, rev(pdataEV$upper))), fill = '#FFE373',alpha=0.7)+
+  geom_line(aes(pdataEV$EV, pdataEV$fit), lwd = 1.5, col = "#FFFD00")+
   theme_bw()+
-  ylim(c(0,25000))+
+  ylim(c(0,24000))+
   xlim(c(-1.5,2.5))+
   theme(panel.grid.major.x = element_blank(),axis.line = element_line(color = "black",size=1.5),axis.ticks.length = unit(.5,"cm"),axis.ticks = element_line(color = "black",size = 1.5))+
   theme(panel.grid = element_blank(),axis.title = element_blank(),axis.text.y = element_text(size=25),axis.text.x = element_text(size=25))
@@ -226,15 +262,15 @@ plotEV <- ggplot()+
 
 # The different models are plotted together
 plotA <- ggplot()+
-  geom_point(aes(SBD$A, SBD$EPG), pch = 16, color = "black", size =5,alpha=0.6)+
-  geom_polygon(aes(x= c(pdataA1$A,rev(pdataA1$A)),y = c(pdataA1$lower,rev(pdataA1$upper))), fill =  hcl.colors(5, "zissou1", alpha = 0.7)[3])+
-  geom_polygon(aes(x= c(pdataA2$A,rev(pdataA2$A)),y = c(pdataA2$lower,rev(pdataA2$upper))), fill =  hcl.colors(5, "zissou1", alpha = 0.5)[3])+
-  geom_polygon(aes(x= c(pdataA3$A,rev(pdataA3$A)),y = c(pdataA3$lower,rev(pdataA3$upper))), fill =  hcl.colors(5, "zissou1", alpha = 0.3)[3])+
-  geom_line(aes(pdataA1$A, pdataA1$fit), lwd = 2,col = hcl.colors(5, "zissou1", alpha = 1)[1])+
-  geom_line(aes(pdataA2$A, pdataA2$fit), lwd = 1.5,col = hcl.colors(5, "zissou1", alpha = 1)[2])+
-  geom_line(aes(pdataA3$A, pdataA3$fit), lwd = 1,col = hcl.colors(5, "zissou1", alpha = 1)[4])+
+  geom_point(aes(SBD$A, SBD$EPG), pch = 16, color = "#6F6F6F", size =3,alpha=0.6)+
+  geom_polygon(aes(x= c(pdataA1$A,rev(pdataA1$A)),y = c(pdataA1$lower,rev(pdataA1$upper))), fill = '#91CBDC',alpha=0.7)+
+  geom_polygon(aes(x= c(pdataA2$A,rev(pdataA2$A)),y = c(pdataA2$lower,rev(pdataA2$upper))), fill =  '#B87A9B',alpha=0.7)+
+  geom_polygon(aes(x= c(pdataA3$A,rev(pdataA3$A)),y = c(pdataA3$lower,rev(pdataA3$upper))), fill =  '#FFE373',alpha=0.7)+
+  geom_line(aes(pdataA1$A, pdataA1$fit), lwd = 1.2,col = "#C0FAFF")+
+  geom_line(aes(pdataA2$A, pdataA2$fit), lwd = 1.2,col = "#F1AFD1")+
+  geom_line(aes(pdataA3$A, pdataA3$fit), lwd = 1.2,col = "#FFFD00")+
   theme_bw()+
-  ylim(c(0,25000))+
+  ylim(c(0,24000))+
   xlim(c(-1.5,3))+
   theme(panel.grid.major.x = element_blank(),axis.line = element_line(color = "black",size=1.5),axis.ticks.length = unit(.5,"cm"),axis.ticks = element_line(color = "black",size = 1.5))+
   theme(panel.grid = element_blank(),axis.title = element_blank(),axis.text.y = element_text(size=25),axis.text.x = element_text(size=25))
@@ -242,15 +278,15 @@ plotA <- ggplot()+
 
 
 plotEL <- ggplot()+
-  geom_point(aes(SBD$EL, SBD$EPG),pch = 16, color = "black", size =5,alpha=0.6)+
-  geom_polygon(aes(x= c(pdataEL1$EL,rev(pdataEL1$EL)),y = c(pdataEL1$lower,rev(pdataEL1$upper))), fill =  hcl.colors(5, "zissou1", alpha = 0.7)[3])+
-  geom_polygon(aes(x= c(pdataEL2$EL,rev(pdataEL2$EL)),y = c(pdataEL2$lower,rev(pdataEL2$upper))), fill =  hcl.colors(5, "zissou1", alpha = 0.5)[3])+
-  geom_polygon(aes(x= c(pdataEL3$EL,rev(pdataEL3$EL)),y = c(pdataEL3$lower,rev(pdataEL3$upper))), fill =  hcl.colors(5, "zissou1", alpha = 0.3)[3])+
-  geom_line(aes(pdataEL1$EL, pdataEL1$fit), lwd = 2,col = hcl.colors(5, "zissou1", alpha = 1)[1])+
-  geom_line(aes(pdataEL2$EL, pdataEL2$fit), lwd = 1.5,col = hcl.colors(5, "zissou1", alpha = 1)[2])+
-  geom_line(aes(pdataEL3$EL, pdataEL3$fit), lwd = 1,col = hcl.colors(5, "zissou1", alpha = 1)[4])+
+  geom_point(aes(SBD$EL, SBD$EPG),pch = 16, color = "#6F6F6F", size =3,alpha=0.6)+
+  geom_polygon(aes(x= c(pdataEL1$EL,rev(pdataEL1$EL)),y = c(pdataEL1$lower,rev(pdataEL1$upper))), fill =  '#91CBDC',alpha=0.7)+
+  geom_polygon(aes(x= c(pdataEL2$EL,rev(pdataEL2$EL)),y = c(pdataEL2$lower,rev(pdataEL2$upper))), fill =  '#B87A9B',alpha=0.7)+
+  geom_polygon(aes(x= c(pdataEL3$EL,rev(pdataEL3$EL)),y = c(pdataEL3$lower,rev(pdataEL3$upper))), fill =  '#FFE373',alpha=0.7)+
+  geom_line(aes(pdataEL1$EL, pdataEL1$fit), lwd = 1.2,col = "#C0FAFF")+
+  geom_line(aes(pdataEL2$EL, pdataEL2$fit), lwd = 1.2,col = "#F1AFD1")+
+  geom_line(aes(pdataEL3$EL, pdataEL3$fit), lwd = 1.2,col = "#FFFD00")+
   theme_bw()+
-  ylim(c(0,25000))+
+  ylim(c(0,24000))+
   xlim(c(-2,3.5))+
   scale_x_continuous(breaks=c(-2,-1,0,1,2,3))+
   theme(panel.grid.major.x = element_blank(),axis.line = element_line(color = "black",size=1.5),axis.ticks.length = unit(.5,"cm"),axis.ticks = element_line(color = "black",size = 1.5))+
@@ -259,36 +295,28 @@ plotEL <- ggplot()+
 
 # Turn sex into binary numeric variable
 SBD1 <- SBD
-SBD1$SEX[which(SBD1$SEX=="female")]<-0
-SBD1$SEX[which(SBD1$SEX=="male")]<-1
 
-plotsex <- ggplot()+
-  geom_point(aes(as.numeric(SBD1$SEX), SBD1$EPG), pch = 16, color = "black", size =5,alpha=0.6)+
-  geom_polygon(aes(x =  c(-0.1,-0.1,0.1,0.1), y = c(pdataSEX11$lower[1],pdataSEX11$lower[2],pdataSEX11$lower[2],pdataSEX11$lower[1])), fill = hcl.colors(5, "zissou1", alpha = 0.7)[3])+
-  geom_polygon(aes(x =  c(0.9,0.9,1.1,1.1), y = c(pdataSEX11$upper[1],pdataSEX11$upper[2],pdataSEX11$upper[2],pdataSEX11$upper[1])), fill = hcl.colors(5, "zissou1", alpha = 0.7)[3])+
-  geom_polygon(aes(x =  c(-0.2,-0.2,0.2,0.2), y = c(pdataSEX21$lower[1],pdataSEX21$lower[2],pdataSEX21$lower[2],pdataSEX21$lower[1])), fill = hcl.colors(5, "zissou1", alpha = 0.5)[3])+
-  geom_polygon(aes(x =  c(0.8,0.8,1.2,1.2), y = c(pdataSEX21$upper[1],pdataSEX21$upper[2],pdataSEX21$upper[2],pdataSEX21$upper[1])), fill = hcl.colors(5, "zissou1", alpha = 0.5)[3])+
-  geom_polygon(aes(x =  c(-0.3,-0.3,0.3,0.3), y = c(pdataSEX31$lower[1],pdataSEX31$lower[2],pdataSEX31$lower[2],pdataSEX31$lower[1])), fill = hcl.colors(5, "zissou1", alpha = 0.3)[3])+
-  geom_polygon(aes(x =  c(0.7,0.7,1.3,1.3), y = c(pdataSEX31$upper[1],pdataSEX31$upper[2],pdataSEX31$upper[2],pdataSEX31$upper[1])), fill = hcl.colors(5, "zissou1", alpha = 0.3)[3])+
-  geom_point(aes(0, pdataSEX11$fit[1]),pch = 16,size = 5,col = hcl.colors(5, "zissou1", alpha = .7)[1])+
-  geom_point(aes(1, pdataSEX11$fit[2]),pch = 16,size = 5,col = hcl.colors(5, "zissou1", alpha = .7)[1])+
-  geom_point(aes(0, pdataSEX21$fit[1]),pch = 16,size = 5,col = hcl.colors(5, "zissou1", alpha = .7)[2])+
-  geom_point(aes(1, pdataSEX21$fit[2]),pch = 16,size = 5,col = hcl.colors(5, "zissou1", alpha = .7)[2])+
-  geom_point(aes(0, pdataSEX31$fit[1]),pch = 16,size = 5,col = hcl.colors(5, "zissou1", alpha = .7)[4])+
-  geom_point(aes(1, pdataSEX31$fit[2]),pch = 16,size = 5,col = hcl.colors(5, "zissou1", alpha = .7)[4])+
-    theme_bw()+
-  ylim(c(0,25000))+
-  scale_x_continuous(breaks=c(0,1),limits=c(-0.3,1.3))+
+pdataSEX<- data.frame('SEX'=c('female','male','female','male','female','male'),"Model1"=c('D','D','S','S','EV','EV'),"Model2"=c('D','D','S','S','EV','EV'),"upper"=c(pdataSEX1$upper,pdataSEX2$upper,pdataSEX3$upper),"lower"=c(pdataSEX1$lower,pdataSEX2$lower,pdataSEX3$lower),"fit"=c(pdataSEX1$fit,pdataSEX2$fit,pdataSEX3$fit))
+require(ggnewscale)
+
+plotsex <- ggplot(SBD1)+
+  ylim(c(0,24000))+
+  geom_violin(aes(x=SEX, y=EPG), fill = "#6F6F6F",color = "#6F6F6F",adjust=2)+
+  scale_color_manual("Model1",values=c('#91CBDC', '#B87A9B','#FFE373'))+
+  geom_errorbar(data=pdataSEX,aes(x=SEX,ymin=lower,ymax=upper,col=Model1),width=0.2,lwd=1.5,position =position_dodge(width=0.4))+
+  new_scale_color()+
+  scale_color_manual("Model2",values=c("#C0FAFF", "#F1AFD1", "#FFFD00"))+
+  geom_point(data=pdataSEX,aes(x=SEX,y=fit,col=Model2),shape=19,size=3,position=position_dodge(width=0.4))+
+  theme_bw()+
   theme(panel.grid.major.x = element_blank(),axis.line = element_line(color = "black",size=1.5),axis.ticks.length = unit(.5,"cm"),axis.ticks = element_line(color = "black",size = 1.5))+
-  theme(panel.grid = element_blank(),axis.title = element_blank(),axis.text.y = element_text(size=25),axis.text.x = element_text(size=25))
+  theme(legend.position ="none",panel.grid = element_blank(),axis.title = element_blank(),axis.text.y = element_text(size=25),axis.text.x = element_text(size=25))
 
-
-ggsave('Degree.png', plot = plotD, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 1/Regression plot", dpi = 300,width = 5.29, height = 4.30,units= "in")
-ggsave('Strength.png', plot = plotS, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 1/Regression plot", dpi = 300,width = 5.29, height = 4.30,units= "in")
-ggsave('Eigenvector.png', plot = plotEV, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 1/Regression plot", dpi = 300,width = 5.29, height = 4.30,units= "in")
-ggsave('Elo-rating.png', plot = plotEL, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 1/Regression plot", dpi = 300,width = 5.29, height = 4.30,units= "in")
-ggsave('Age.png', plot = plotA, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 1/Regression plot", dpi = 300,width = 5.29, height = 4.30,units= "in")
-ggsave('Sex.png', plot = plotsex, device = 'png',path = "C:/Users/Xu Zhihong/Desktop/testing area/Parts of the paper 1/review round 1/Regression plot", dpi = 300,width = 5.29, height = 4.30,units= "in")
+ggsave('Degree.png', plot = plotD2,device = 'png',path = , dpi = 300,width = 5.29, height = 5,units= "in")
+ggsave('Strength.png', plot = plotS2, device = 'png', dpi = 300,width = 5.29, height = 5,units= "in")
+ggsave('Eigenvector.png', plot = plotEV2, device = 'png', dpi = 300,width = 5.29, height = 5,units= "in")
+ggsave('Elo-rating.png', plot = plotEL2, device = 'png', dpi = 300,width = 5.29, height = 5,units= "in")
+ggsave('Age.png', plot = plotA2, device = 'png', dpi = 300,width = 5.29, height = 5,units= "in")
+ggsave('Sex.png', plot = plotsex2, device = 'png', dpi = 300,width = 5.29, height = 5,units= "in")
 
 
 

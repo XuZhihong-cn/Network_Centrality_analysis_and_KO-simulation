@@ -6,7 +6,6 @@ library(performance)
 library(car)
 library(effects)
 library(multcomp)
-library(MuMIn)
 library(DHARMa)
 library(ggplot2)
 library(igraph)
@@ -30,8 +29,8 @@ IBD <- IndividualData
 SBD <- SampleData
 
 # use these to reset the colnames if the first letter became garbled
-header1 <- as.character(read.csv("raw_data/SampleData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
-header2 <- as.character(read.csv("raw_data/IndData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
+header1 <- as.character(unlist(read.csv("raw_data/SampleData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ]))
+header2 <- as.character(unlist(read.csv("raw_data/IndData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ]))
 colnames(SBD) <- header1
 colnames(IBD) <- header2
 SBD[, c("D", "S", "EV", "A", "EL")] <- apply(SBD[, c("D", "S", "EV", "A", "EL")], 2, function(x)as.numeric(scale(x)))
@@ -170,11 +169,6 @@ plot(allEffects(glmmD))
 plot(allEffects(glmmS))
 plot(allEffects(glmmEV))
 
-# averaging the models to have a overall estimate of shared factors
-
-glmm <- model.avg(glmmD,glmmS,glmmEV)
-summary(glmm)
-
 
 ## ADULT FEMALES ##
 
@@ -183,7 +177,7 @@ SampleData <- read.csv("raw_data/SampleData.csv",  sep = ";") # be mindful of se
 SBD <- SampleData
 
 # use these to reset the colnames if the first letter became garbled
-header1 <- as.character(read.csv("raw_data/SampleData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
+header1 <- as.character(unlist(read.csv("raw_data/SampleData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ]))
 colnames(SBD) <- header1
 
 SBDaf<-droplevels(subset(droplevels(subset(SBD, AG=="adult")),SEX=="female"))
@@ -253,10 +247,7 @@ plot(allEffects(glmmAF_D))
 plot(allEffects(glmmAF_S))
 plot(allEffects(glmmAF_EV))
 
-# averaging the models to have a overall estimate of shared factors
 
-glmmAF <- model.avg(glmmAF_D,glmmAF_S,glmmAF_EV)
-summary(glmmAF)
 
 ## JUVENILES ##
 
@@ -266,7 +257,7 @@ SampleData <- read.csv("raw_data/SampleData.csv",  sep = ";") # be mindful of se
 SBD <- SampleData
 
 # use these to reset the colnames if the first letter became garbled
-header1 <- as.character(read.csv("raw_data/SampleData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ])
+header1 <- as.character(unlist(read.csv("raw_data/SampleData.csv", header = FALSE, fileEncoding="UTF-8-BOM", sep = ";")[1, ]))
 colnames(SBD) <- header1
 
 SBDjuv<-droplevels(subset(SBD, AG=="juvenile"))
@@ -337,7 +328,5 @@ plot(allEffects(glmmJUV_D))
 plot(allEffects(glmmJUV_S))
 plot(allEffects(glmmJUV_EV))
 
-# averaging the models to have a overall estimate of shared factors
 
-glmmJUV <- model.avg(glmmJUV_D,glmmJUV_S,glmmJUV_EV)
 summary(glmmJUV)
